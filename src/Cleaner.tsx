@@ -1,4 +1,5 @@
 import { useState } from "react";
+import './App.css';
 
 type CleanResult = {
     key: string;
@@ -22,8 +23,8 @@ const Cleaner = () => {
         try {
             original = JSON.parse(text);
         } catch (err) {
-            console.error("Error al leer el archivo JSON:", err);
-            setStatus("❌ Error: Archivo no es JSON válido.");
+            console.error("Error: Invalid JSON file:", err);
+            setStatus("❌ Error: Invalid JSON file.");
             return;
         }
 
@@ -104,7 +105,7 @@ const Cleaner = () => {
 
         setDeleted(deletedItems);
         setCleanedJson(JSON.stringify(cleaned, null, 2));
-        setStatus(`✅ Limpiado: ${deletedItems.length} entradas eliminadas.`);
+        setStatus(`✅ Cleaned: ${deletedItems.length} entries removed.`);
     };
 
     const downloadCleanedJSON = () => {
@@ -125,13 +126,13 @@ const Cleaner = () => {
 
             {cleanedJson && (
                 <button onClick={downloadCleanedJSON}>
-                    ⬇️ Descargar JSON limpio
+                    ⬇️ Download cleaned JSON
                 </button>
             )}
 
             {deleted.length > 0 && (
                 <div style={{ marginTop: "1rem" }}>
-                    <h3>🗑️ Eliminados ({deleted.length}):</h3>
+                    <h3>🗑️ Removed Entries ({deleted.length}):</h3>
                     <div
                         style={{
                             maxHeight: "250px",
@@ -143,7 +144,7 @@ const Cleaner = () => {
                     >
                         {deleted.map((item, i) => (
                             <div key={i}>
-                                <strong>Línea {item.line}</strong>: "{item.key}" → "
+                                <strong>Line {item.line}</strong>: "{item.key}" → "
                                 {item.value}"
                             </div>
                         ))}

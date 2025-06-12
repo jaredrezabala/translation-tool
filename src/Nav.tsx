@@ -1,18 +1,32 @@
 type Props = {
+  currentView: string;
   setCurrentView: (view: string) => void;
 };
 
-function Nav({ setCurrentView }: Props) {
+function Navigation({ currentView, setCurrentView }: Props) {
+  const links = [
+    { label: "Home", view: "home" },
+    { label: "Compare Survey Strings", view: "compare-survey" },
+    { label: "Compare HardCoded Strings", view: "compare-hardcoded" },
+    { label: "JSON Cleaner", view: "cleaner" },
+    { label: "JSON Extractor", view: "extractor" },
+    { label: "JSON Splitter", view: "splitter" },
+  ];
+
   return (
-    <nav style={{ display: "flex", gap: "1rem", padding: "1rem", borderBottom: "1px solid #ccc" }}>
-      <button onClick={() => setCurrentView("home")}>🏠 Home</button>
-      <button onClick={() => setCurrentView("compare-survey")}>📊 Compare Survey Strings</button>
-      <button onClick={() => setCurrentView("compare-hardcoded")}>🧩 Compare Hardcoded Strings</button>
-      <button onClick={() => setCurrentView("cleaner")}>🧹 JSON Cleaner</button>
-      <button onClick={() => setCurrentView("extractor")}>🗂️ JSON Extractor</button>
-      <button onClick={() => setCurrentView("splitter")}>✂️ JSON Splitter</button>
+    <nav>
+      {links.map(({ label, view }) => (
+        <a
+          key={view}
+          href="#"
+          onClick={() => setCurrentView(view)}
+          className={currentView === view ? "active" : ""}
+        >
+          {label}
+        </a>
+      ))}
     </nav>
   );
 }
 
-export default Nav;
+export default Navigation;

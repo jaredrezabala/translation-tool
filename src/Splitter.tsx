@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import './App.css';
 
 type TranslationEntry = {
   [key: string]: { "en-US": string };
@@ -17,15 +18,15 @@ const Splitter = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setStatus("📄 Leyendo archivo...");
+    setStatus("📄 Reading file...");
     const text = await file.text();
 
     let parsed: TranslationEntry;
     try {
       parsed = JSON.parse(text);
     } catch (err) {
-      console.error("❌ Error al leer el JSON:", err);
-      setStatus("❌ El archivo no es un JSON válido.");
+      console.error("❌ The file is not a valid JSON:", err);
+      setStatus("❌ The file is not a valid JSON.");
       return;
     }
 
@@ -34,11 +35,11 @@ const Splitter = () => {
     const totalChunks = Math.ceil(entries.length / chunkSize);
 
     if (entries.length === 0) {
-      setStatus("⚠️ El archivo JSON está vacío.");
+      setStatus("⚠️ JSON file is empty.");
       return;
     }
 
-    setStatus(`🔧 Dividiendo en ${totalChunks} archivo(s)...`);
+    setStatus(`🔧 Splitting into ${totalChunks} file(s)...`);
     const chunks: FileChunk[] = [];
 
     for (let i = 0; i < totalChunks; i++) {
@@ -53,7 +54,7 @@ const Splitter = () => {
     }
 
     setFileChunks(chunks);
-    setStatus("✅ Archivos listos para descargar.");
+    setStatus("✅ Files ready to download.");
   };
 
   const downloadChunk = (chunk: FileChunk) => {
@@ -66,7 +67,7 @@ const Splitter = () => {
 
   return (
     <div>
-      <h2>📚 Divide tu JSON en bloques de 100 líneas</h2>
+      <h2>📚 Split your JSON into chunks of 100 lines</h2>
       <input type="file" accept=".json" onChange={handleFileChange} />
       {status && <p>{status}</p>}
 

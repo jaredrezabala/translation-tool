@@ -1,4 +1,5 @@
 import { useState } from "react";
+import './App.css';
 
 const Extractor = () => {
   const [jsonFile, setJsonFile] = useState<File | null>(null);
@@ -19,8 +20,8 @@ const Extractor = () => {
     try {
       original = JSON.parse(text);
     } catch (err) {
-      console.error("Error al leer el archivo JSON:", err);
-      setStatus("❌ Archivo no es un JSON válido.");
+      console.error("File is not valid JSON:", err);
+      setStatus("❌ File is not valid JSON.");
       return;
     }
 
@@ -32,7 +33,7 @@ const Extractor = () => {
     const locales = Array.from(localesSet).sort();
     setAvailableLocales(locales);
     setSelectedLocale(locales[0]);
-    setStatus(`✅ Archivo cargado. Selecciona el idioma que deseas extraer.`);
+    setStatus(`✅ File loaded. Please select the language you want to extract.`);
   };
 
   const extractLocale = async () => {
@@ -51,7 +52,7 @@ const Extractor = () => {
     }
 
     setExtractedJson(JSON.stringify(extracted, null, 2));
-    setStatus(`✅ Extracción completada para ${selectedLocale}.`);
+    setStatus(`✅ Extraction complete for ${selectedLocale}.`);
   };
 
   const downloadExtracted = () => {
@@ -66,12 +67,12 @@ const Extractor = () => {
 
   return (
     <div>
-      <h2>🗂️ Extractor de idioma específico</h2>
+      <h2>🗂️ Locale Extractor</h2>
       <input type="file" accept=".json" onChange={handleFileChange} />
 
       {availableLocales.length > 0 && (
         <div style={{ marginTop: "1rem" }}>
-          <label>Selecciona el idioma:</label>
+          <label>Select a locale:</label>
           <select
             value={selectedLocale}
             onChange={(e) => setSelectedLocale(e.target.value)}
@@ -83,7 +84,7 @@ const Extractor = () => {
             ))}
           </select>
           <button style={{ marginLeft: "1rem" }} onClick={extractLocale}>
-            Extraer
+            Extract
           </button>
         </div>
       )}
@@ -92,7 +93,7 @@ const Extractor = () => {
 
       {extractedJson && (
         <div>
-          <button onClick={downloadExtracted}>⬇️ Descargar JSON extraído</button>
+          <button onClick={downloadExtracted}>⬇️ Download extracted JSON</button>
         </div>
       )}
     </div>

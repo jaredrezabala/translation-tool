@@ -1,11 +1,11 @@
-import './App.css';
-import Nav from './Nav';
-import SimpleKeyComparer from './Compare';
-import Splitter from './Splitter';
-import Cleaner from './Cleaner';
-import Extractor from './Extractor';
-import KeyComparer from './CompareHardcode';
-import { useState } from 'react';
+import './App.css'
+import Navigation from './Nav'
+import SimpleKeyComparer from './Compare'
+import Splitter from './Splitter'
+import Cleaner from './Cleaner'
+import Extractor from './Extractor'
+import KeyComparer from './CompareHardcode'
+import { useState } from 'react'
 
 function App() {
   const [currentView, setCurrentView] = useState("home");
@@ -23,16 +23,18 @@ function App() {
       case "splitter":
         return <Splitter />;
       default:
-        return <h2 style={{ textAlign: "center", marginTop: "2rem" }}>👋 Bienvenido. Selecciona una herramienta del menú.</h2>;
+        return <h2>👋 Welcome. Please select a tool from the menu.</h2>;
     }
   };
 
   return (
     <>
-      <Nav setCurrentView={setCurrentView} />
-      {renderView()}
+      <Navigation currentView={currentView} setCurrentView={setCurrentView} />
+      <div className="container">
+        {renderView()}
+      </div>
     </>
-  );
+  )
 }
 
 export default App;

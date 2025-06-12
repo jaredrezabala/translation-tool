@@ -1,4 +1,5 @@
 import { useState } from "react";
+import './App.css';
 
 type JSONValue = string | number | boolean | JSONObject | Array<JSONValue>;
 interface JSONObject { [key: string]: JSONValue }
@@ -20,9 +21,9 @@ const KeyComparer = () => {
       const json = JSON.parse(text);
       setBaseText(text);
       setBaseJSON(json);
-      setStatus((prev) => prev + "\n✅ Archivo base cargado.");
+      setStatus((prev) => prev + "\n✅ Base file loaded.");
     } catch {
-      setStatus("❌ Error al cargar el archivo base.");
+      setStatus("❌ Error loading base file.");
     }
   };
 
@@ -34,15 +35,15 @@ const KeyComparer = () => {
       const text = await file.text();
       const json = JSON.parse(text);
       setCompareJSON(json);
-      setStatus((prev) => prev + "\n✅ Archivo a comparar cargado.");
+      setStatus((prev) => prev + "\n✅ Comparison file loaded.");
     } catch {
-      setStatus("❌ Error al cargar el archivo de comparación.");
+      setStatus("❌ Error loading comparison file.");
     }
   };
 
   const compareKeys = () => {
     if (!baseJSON || !compareJSON) {
-      setStatus("❌ Asegúrate de cargar ambos archivos JSON.");
+      setStatus("❌ Please make sure both JSON files are loaded.");
       return;
     }
 
@@ -97,7 +98,7 @@ const KeyComparer = () => {
     });
 
     setMissingKeys(missingWithLines);
-    setStatus(`✅ Comparación completada. ${missingWithLines.length} clave(s) faltante(s).`);
+    setStatus(`✅ Comparison complete. ${missingWithLines.length} missing key(s).`);
   };
 
   const downloadMissingKeys = () => {
@@ -113,24 +114,24 @@ const KeyComparer = () => {
 
   return (
     <div>
-      <h2>🧩 Comparador de claves JSON</h2>
+      <h2>🧩 JSON Key Comparator</h2>
       <div>
-        <label>📂 Cargar archivo base: </label>
+        <label>📂 Upload base file: </label>
         <input type="file" accept=".json" onChange={handleBaseFile} />
       </div>
       <div>
-        <label>📂 Cargar archivo a comparar: </label>
+        <label>📂 Upload file to compare: </label>
         <input type="file" accept=".json" onChange={handleCompareFile} />
       </div>
       <button style={{ marginTop: "1rem" }} onClick={compareKeys}>
-        🔍 Comparar claves
+        🔍 Compare Keys
       </button>
 
       {status && <p>{status}</p>}
 
       {missingKeys.length > 0 && (
         <div style={{ marginTop: "1rem" }}>
-          <h3>🔑 Claves faltantes ({missingKeys.length}):</h3>
+          <h3>🔑 Missing Keys ({missingKeys.length}):</h3>
           <div
             style={{
               maxHeight: "300px",
@@ -142,11 +143,11 @@ const KeyComparer = () => {
           >
             {missingKeys.map((item, i) => (
               <div key={i}>
-                <strong>Línea {item.line}</strong>: {item.key}
+                <strong>Line {item.line}</strong>: {item.key}
               </div>
             ))}
           </div>
-          <button onClick={downloadMissingKeys}>⬇️ Descargar lista</button>
+          <button onClick={downloadMissingKeys}>⬇️ Download list</button>
         </div>
       )}
     </div>
