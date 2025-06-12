@@ -5,6 +5,8 @@ import Splitter from './Splitter'
 import Cleaner from './Cleaner'
 import Extractor from './Extractor'
 import KeyComparer from './CompareHardcode'
+import MergeJSON from './MergeJSON'
+
 import { useState } from 'react'
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
         return <Extractor />;
       case "splitter":
         return <Splitter />;
+      case "merge-json":
+        return <MergeJSON />;
       default:
         return <h2>👋 Welcome. Please select a tool from the menu.</h2>;
     }

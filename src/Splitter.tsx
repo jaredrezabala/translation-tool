@@ -31,7 +31,7 @@ const Splitter = () => {
     }
 
     const entries = Object.entries(parsed);
-    const chunkSize = 50;
+    const chunkSize = 332;
     const totalChunks = Math.ceil(entries.length / chunkSize);
 
     if (entries.length === 0) {
@@ -67,7 +67,7 @@ const Splitter = () => {
 
   return (
     <div>
-      <h2>📚 Split your JSON into chunks of 100 lines</h2>
+      <h2>📚 Split your JSON into chunks of 1000 lines</h2>
       <input type="file" accept=".json" onChange={handleFileChange} />
       {status && <p>{status}</p>}
 

@@ -10,6 +10,7 @@ const KeyComparer = () => {
   const [baseJSON, setBaseJSON] = useState<JSONObject | null>(null);
   const [compareJSON, setCompareJSON] = useState<JSONObject | null>(null);
   const [missingKeys, setMissingKeys] = useState<MissingKeyResult[]>([]);
+  const [missingData, setMissingData] = useState<JSONObject>({});
   const [status, setStatus] = useState("");
 
   const handleBaseFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -21,7 +22,7 @@ const KeyComparer = () => {
       const json = JSON.parse(text);
       setBaseText(text);
       setBaseJSON(json);
-      setStatus((prev) => prev + "\n✅ Base file loaded.");
+      setStatus("✅ Base file loaded.");
     } catch {
       setStatus("❌ Error loading base file.");
     }
@@ -35,11 +36,12 @@ const KeyComparer = () => {
       const text = await file.text();
       const json = JSON.parse(text);
       setCompareJSON(json);
-      setStatus((prev) => prev + "\n✅ Comparison file loaded.");
+      setStatus("✅ Comparison file loaded.");
     } catch {
       setStatus("❌ Error loading comparison file.");
     }
   };
+
 
   const compareKeys = () => {
     if (!baseJSON || !compareJSON) {
@@ -81,28 +83,58 @@ const KeyComparer = () => {
 
     const missingPaths = findMissing(baseJSON, compareJSON);
     const lines = baseText.split("\n");
+    const missingWithLines: MissingKeyResult[] = [];
+    const collectedData: JSONObject = {};
 
-    const missingWithLines: MissingKeyResult[] = missingPaths.map((keyPath) => {
+    const insertNestedKey = (obj: JSONObject, path: string[], value: JSONValue) => {
+      const [first, ...rest] = path;
+      if (!rest.length) {
+        obj[first] = value;
+      } else {
+        if (!obj[first] || typeof obj[first] !== 'object') {
+          obj[first] = {};
+        }
+        insertNestedKey(obj[first] as JSONObject, rest, value);
+      }
+    };
+
+    missingPaths.forEach((keyPath) => {
       const parts = keyPath.split(".");
       const lastKey = parts[parts.length - 1];
 
-      // escapamos caracteres especiales
       const escapedKey = lastKey.replace(/[-\\^$*+?.()|[\]{}]/g, "\\$&");
       const regex = new RegExp(`"${escapedKey}"`);
       const lineIndex = lines.findIndex((line) => regex.test(line));
 
-      return {
+      missingWithLines.push({
         key: keyPath,
         line: lineIndex + 1 || 0,
-      };
+      });
+
+      // Recolectamos el valor original desde baseJSON
+      let originalValue: JSONValue = baseJSON;
+      for (const part of parts) {
+        if (
+          typeof originalValue === "object" &&
+          originalValue !== null &&
+          part in originalValue
+        ) {
+          originalValue = (originalValue as JSONObject)[part];
+        } else {
+          originalValue = "";
+          break;
+        }
+      }
+      insertNestedKey(collectedData, parts, originalValue);
     });
 
     setMissingKeys(missingWithLines);
+    setMissingData(collectedData);
     setStatus(`✅ Comparison complete. ${missingWithLines.length} missing key(s).`);
   };
 
   const downloadMissingKeys = () => {
-    const json = JSON.stringify(missingKeys, null, 2);
+    const json = JSON.stringify(missingData, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -138,7 +170,7 @@ const KeyComparer = () => {
               overflowY: "auto",
               border: "1px solid #ccc",
               padding: "0.5rem",
-              textAlign: "left"
+              textAlign: "left",
             }}
           >
             {missingKeys.map((item, i) => (
@@ -147,7 +179,7 @@ const KeyComparer = () => {
               </div>
             ))}
           </div>
-          <button onClick={downloadMissingKeys}>⬇️ Download list</button>
+          <button onClick={downloadMissingKeys}>⬇️ Download JSON format</button>
         </div>
       )}
     </div>

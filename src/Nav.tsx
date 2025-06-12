@@ -11,6 +11,7 @@ function Navigation({ currentView, setCurrentView }: Props) {
     { label: "JSON Cleaner", view: "cleaner" },
     { label: "JSON Extractor", view: "extractor" },
     { label: "JSON Splitter", view: "splitter" },
+    { label: "Merge JSON", view: "merge-json" }
   ];
 
   return (
