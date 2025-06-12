@@ -1,0 +1,68 @@
+/* Compare.css */
+
+.compare-container {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.compare-container h2 {
+  margin-bottom: 1.5rem;
+}
+
+.compare-container label {
+  display: block;
+  font-weight: bold;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.compare-container input[type='file'] {
+  margin-bottom: 1rem;
+}
+
+.compare-container button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.compare-container button:hover {
+  background-color: #0056b3;
+}
+
+.result-box {
+  background-color: #1e1e1e;
+  text-align: left;
+  color: #dcdcdc;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.95rem;
+  padding: 1rem;
+  border-radius: 5px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  border: 1px solid #444;
+}
+
+/* Syntax colors */
+.result-box .key {
+  color: #9cdcfe;
+}
+.result-box .string {
+  color: #ce9178;
+}
+.result-box .number {
+  color: #b5cea8;
+}
+.result-box .boolean {
+  color: #569cd6;
+}
+.result-box .null {
+  color: #808080;
+}
