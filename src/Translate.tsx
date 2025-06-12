@@ -26,24 +26,37 @@ const Translate = () => {
     setLoading(true);
 
     const output: TranslatedJSON = {};
+    const keys = Object.keys(originalJSON);
+    const enTexts = keys.map(key => originalJSON[key]["en-US"]);
 
-    for (const key in originalJSON) {
-      const enText = originalJSON[key]["en-US"];
-      const translations: Translations = { "en-US": enText };
+    // Inicializar con en-US
+    keys.forEach((key, i) => {
+      output[key] = { "en-US": enTexts[i] };
+    });
 
-      for (const locale of TARGET_LOCALES) {
-        const translatedText = await fetchTranslation(enText, locale);
-        translations[locale] = translatedText;
-      }
+    for (const locale of TARGET_LOCALES) {
+      const translations = await fetchBulkTranslations(enTexts, locale);
 
-      output[key] = translations;
+      keys.forEach((key, i) => {
+        output[key][locale] = translations[enTexts[i]] || `[ERROR ${locale}]`;
+      });
     }
 
     setTranslatedJSON(output);
     setLoading(false);
   };
 
-  const fetchTranslation = async (text: string, locale: string): Promise<string> => {
+  const fetchBulkTranslations = async (
+    strings: string[],
+    locale: string
+  ): Promise<Record<string, string>> => {
+    const promptObj = strings.reduce((acc, str) => {
+      acc[str] = "";
+      return acc;
+    }, {} as Record<string, string>);
+
+    const prompt = `Translate the following UI strings to ${locale}. Return ONLY a JSON object with the translated values as values:\n\n${JSON.stringify(promptObj, null, 2)}`;
+
     try {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -52,11 +65,11 @@ const Translate = () => {
           Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo", // Cambiado desde gpt-4
+          model: "gpt-3.5-turbo",
           messages: [
             {
               role: "user",
-              content: `Translate the following UI string to ${locale}: "${text}". Only return the translated text.`,
+              content: prompt,
             },
           ],
           temperature: 0.3,
@@ -64,18 +77,20 @@ const Translate = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("❌ API Error:", response.status, errorData);
-        return `[ERROR ${locale}]`; // Opcional: para marcar en la salida
+        const errorData = await response.text();
+        console.error(`❌ Error ${response.status}:`, errorData);
+        return {};
       }
 
       const data = await response.json();
-      const result = data.choices?.[0]?.message?.content?.trim();
+      const content = data.choices?.[0]?.message?.content;
 
-      return result || `[EMPTY ${locale}]`;
-    } catch (error) {
-      console.error("⚠️ fetchTranslation error:", error);
-      return `[FAILED ${locale}]`;
+      if (!content) throw new Error("Empty response from OpenAI");
+
+      return JSON.parse(content);
+    } catch (err) {
+      console.error(`⚠️ Failed to translate to ${locale}`, err);
+      return {};
     }
   };
 
