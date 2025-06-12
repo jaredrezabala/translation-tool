@@ -1,121 +1,143 @@
-import React, { useState } from 'react';
-import './Compare.css';
+import { useState } from "react";
 
-type TranslationMap = Record<string, string>;
+type JSONPrimitive = string | number | boolean | null;
+type JSONValue = JSONPrimitive | JSONObject | JSONArray;
 
-const Compare: React.FC = () => {
-  const [baseFile, setBaseFile] = useState<TranslationMap | null>(null);
-  const [compareFile, setCompareFile] = useState<TranslationMap | null>(null);
-  const [missingKeys, setMissingKeys] = useState<TranslationMap>({});
-  const [languageLabel, setLanguageLabel] = useState<string>('');
+interface JSONObject {
+  [key: string]: JSONValue;
+}
 
-  // 🟡 AÑADE ESTA FUNCIÓN AQUÍ, antes del return
-  const syntaxHighlight = (json: string) => {
-    if (!json) return '';
-    return json
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(
-        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|\b\d+(\.\d+)?\b)/g,
-        (match) => {
-          let cls = 'number';
-          if (/^"/.test(match)) {
-            cls = /:$/.test(match) ? 'key' : 'string';
-          } else if (/true|false/.test(match)) {
-            cls = 'boolean';
-          } else if (/null/.test(match)) {
-            cls = 'null';
-          }
-          return `<span class="${cls}">${match}</span>`;
-        }
-      );
-  };
+type JSONArray = JSONValue[];
 
-  const handleFileUpload = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setFile: React.Dispatch<React.SetStateAction<TranslationMap | null>>,
-    isCompareFile: boolean = false
-  ) => {
+type MissingKey = {
+  key: string;
+  line: number;
+  lineContent: string;
+};
+
+const SimpleKeyComparer = () => {
+  const [baseText, setBaseText] = useState<string>("");
+  const [missingKeys, setMissingKeys] = useState<MissingKey[]>([]);
+  const [compareKeys, setCompareKeys] = useState<Set<string>>(new Set());
+  const [status, setStatus] = useState("");
+
+  const handleBaseFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        setFile(json);
-        if (isCompareFile) {
-          setLanguageLabel(file.name.replace('.json', ''));
-        }
-      } catch (err) {
-        console.error('Error al leer el archivo JSON:', err);
-        alert('Archivo inválido. Asegúrate de que sea un JSON válido.');
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const text = await file.text();
+      setBaseText(text);
+      setStatus((prev) => prev + "\n✅ Archivo base cargado.");
+    } catch {
+      setStatus("❌ Error al cargar archivo base.");
+    }
   };
 
-  const compareFiles = () => {
-    if (!baseFile || !compareFile) {
-      alert('Sube ambos archivos para comparar.');
+  const handleCompareFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text);
+      const keys = Object.keys(json);
+      setCompareKeys(new Set(keys));
+      setStatus((prev) => prev + "\n✅ Archivo a comparar cargado.");
+    } catch {
+      setStatus("❌ Error al cargar archivo de comparación.");
+    }
+  };
+
+  const compare = () => {
+    if (!baseText || !compareKeys.size) {
+      setStatus("❌ Asegúrate de cargar ambos archivos.");
       return;
     }
 
-    const missing: TranslationMap = {};
-    for (const key in baseFile) {
-      if (!(key in compareFile)) {
-        missing[key] = baseFile[key];
+    let baseJson: JSONObject;
+    try {
+      baseJson = JSON.parse(baseText);
+    } catch {
+      setStatus("❌ Error al parsear JSON base.");
+      return;
+    }
+
+    const lines = baseText.split("\n");
+    const result: MissingKey[] = [];
+    const seen = new Set<string>();
+
+    for (const key in baseJson) {
+      if (!compareKeys.has(key) && !seen.has(key)) {
+        seen.add(key);
+        const escapedKey = key.replace(/[-\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`"${escapedKey}"`);
+        const lineIndex = lines.findIndex((line) => regex.test(line));
+
+        result.push({
+          key,
+          line: lineIndex + 1 || 0,
+          lineContent: key,
+        });
       }
     }
-    setMissingKeys(missing);
+
+    setMissingKeys(result);
+    setStatus(`✅ Comparación completa. ${result.length} clave(s) faltante(s).`);
   };
 
   const downloadMissing = () => {
-    const blob = new Blob([JSON.stringify(missingKeys, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `missing_${languageLabel || 'translation'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const exportObj: Record<string, { "en-US": string }> = {};
+
+  missingKeys.forEach(({ key }) => {
+    exportObj[key] = { "en-US": key };
+  });
+
+  const json = JSON.stringify(exportObj, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "missing-flat-keys.json";
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
 
   return (
-    <div className="compare-container">
-      <h2>Comparar archivos de traducción</h2>
+    <div>
+      <h2>📄 Comparador simple de claves (con línea)</h2>
+
       <div>
-        <label>Archivo base (en.json):</label>
-        <input type="file" accept=".json" onChange={(e) => handleFileUpload(e, setBaseFile)} />
+        <label>📂 Archivo base (.json): </label>
+        <input type="file" accept=".json" onChange={handleBaseFile} />
       </div>
       <div>
-        <label>Archivo a comparar (es.json, fr.json, etc.):</label>
-        <input
-          type="file"
-          accept=".json"
-          onChange={(e) => handleFileUpload(e, setCompareFile, true)}
-        />
-      </div>
-      <div>
-        <button onClick={compareFiles}>Comparar archivos</button>
+        <label>📂 Archivo plano para comparar: </label>
+        <input type="file" accept=".json" onChange={handleCompareFile} />
       </div>
 
-      {Object.keys(missingKeys).length > 0 && (
-        <div>
-          <h3>Claves faltantes en {languageLabel}.json:</h3>
-          <div
-            className="result-box"
-            dangerouslySetInnerHTML={{
-              __html: syntaxHighlight(JSON.stringify(missingKeys, null, 2)),
-            }}
-          />
-          <button onClick={downloadMissing}>Descargar JSON faltantes</button>
+      <button onClick={compare} style={{ marginTop: "1rem" }}>
+        🔍 Comparar claves
+      </button>
+
+      {status && <p>{status}</p>}
+
+      {missingKeys.length > 0 && (
+        <div style={{ marginTop: "1rem" }}>
+          <h3>🔑 Claves faltantes ({missingKeys.length}):</h3>
+          <div style={{ maxHeight: "250px", overflowY: "auto" }}>
+            {missingKeys.map((item, i) => (
+              <div key={i} style={{ marginBottom: "0.5rem", fontSize: "0.95rem", textAlign: "left"}}>
+                <strong>Línea {item.line}:</strong> "{item.lineContent}"
+              </div>
+            ))}
+          </div>
+          <button onClick={downloadMissing}>⬇️ Descargar lista</button>
         </div>
       )}
     </div>
   );
 };
 
-export default Compare;
+export default SimpleKeyComparer;
